@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+<head>
+    <title>{{ header }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+<body style="height: 100%; width: 100%; display: flex; flex-flow: column">
+<div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
+    <h1>{{ header }}</h1>
+    <hr>
+    <p style="color: white">All sentences beneath miss a verb, perhaps from the syntactic field "hide/conceal".<br>
+        What verbs would you use in your native language to complete the sentences?</p>
+</div>
+
+<div class="container" style="flex-grow: 1">
+    <form action="/accepted" method='POST'>
+        <fieldset>
+            <div class="form-group">
+                <label for="language">What is your language?</label>
+                <input type="text" class="form-control" name="language" required>
+            </div>
+
+            <div class="form-group">
+                <label for="sex">What is your sex?</label>
+                <select class="form-control" name="sex" required>
+                    <option selected disabled></option>
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+            </div>
+
+            {% for question in questions %}
+                <div class="form-group">
+                    <label for="q1">
+                        Q{{ question[0] }}. {{ question[1] }}
+                    </label>
+                    <input type="text" class="form-control" name="q{{ question[0] }}" required>
+                </div>
+            {% endfor %}
+
+            <div style="text-align: center; margin: 40px">
+                <button type="submit" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-send"
+                                                                           style="margin-right: 4mm"></span>Submit the
+                    answer
+                </button>
+            </div>
+        </fieldset>
+
+    </form>
+</div>
+
+{{ footer|safe }}
+
+</body>
+</html>

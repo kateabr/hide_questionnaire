@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" style="width: 100%">
+<head>
+    <title>{{ header }} :: {{ title }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+</head>
+<body style="height: 100%; width: 100%; display: flex; flex-flow: column">
+
+<div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
+    <h1>{{ header }}</h1>
+    <hr>
+    <p style="color: white">Search results</p>
+</div>
+
+<div class="container" style="flex-grow: 1; max-width: 100%; overflow-x: scroll">
+    <table class="table table-hover" style="max-width: inherit;">
+        <thead>
+        <tr>
+            <th>Language</th>
+            <th>Sex</th>
+            {% for question in questions %}
+                <th>
+                    <div class="text-info" data-toggle="tooltip" title="{{ question[1] }}" data-placement="top">
+                        Q{{ question[0] }}</div>
+                </th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for res in search_results %}
+            <tr>
+                {% for value in res %}
+                    <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align: center">{{ search_results|length }} results found</div>
+
+{{ footer|safe }}
+
+</body>
+</html>
