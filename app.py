@@ -1,6 +1,4 @@
-from __future__ import unicode_literals
 from flask import Flask, render_template, request
-from livereload import Server
 import sqlite3
 import sqlalchemy as db
 import matplotlib.pyplot as plt
@@ -189,5 +187,4 @@ def accept():
 
 
 if __name__ == '__main__':
-    server = Server(app.wsgi_app)
-    server.serve()
+    app.run()
