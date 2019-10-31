@@ -11,21 +11,6 @@ app = Flask(__name__)
 db = r"./results.db"
 jumbotron_bg = "https://sun9-30.userapi.com/c857520/v857520212/c8d33/2830GSktk0w.jpg"
 header = "Hide that!"
-footer = "<div style=\"text-align: center; padding-bottom: 40px; margin-top: 40px\">\
-        <a href=\"/\" class=\"btn btn-default\" role=\"button\">\
-            <span class=\"glyphicon glyphicon-home\" style=\"margin-right: 1mm\"></span>\
-            Home\
-        </a>\
-        <a href=\"stats\" class=\"btn btn-default\" role=\"button\">\
-            <span class=\"glyphicon glyphicon-signal\" style=\"margin-right: 1mm\"></span>\
-            Statistics\
-        </a>\
-\
-        <a href=\"search\" class=\"btn btn-default\" role=\"button\">\
-            <span class=\"glyphicon glyphicon-search\" style=\"margin-right: 1mm\"></span>\
-            Browse answers\
-        </a>\
-    </div>"
 
 
 def makeplot(languages):
@@ -84,7 +69,7 @@ def index():
     conn = sqlite3.connect(db)
     with conn:
         questions = conn.cursor().execute("select * from questions").fetchall()
-    return render_template("index.html", questions=questions, jumbotron_bg=jumbotron_bg, header=header, footer=footer)
+    return render_template("index.html", questions=questions, jumbotron_bg=jumbotron_bg, header=header)
 
 
 @app.route('/search')
@@ -94,7 +79,7 @@ def search():
         languages = conn.cursor().execute("select * from languages").fetchall()
         questions = conn.cursor().execute("select * from questions").fetchall()
     return render_template("search.html", title="Browse answers", languages=languages, questions=questions,
-                           jumbotron_bg=jumbotron_bg, header=header, footer=footer)
+                           jumbotron_bg=jumbotron_bg, header=header)
 
 
 @app.route('/result', methods=['POST'])
@@ -147,7 +132,7 @@ def results():
         search_results = conn.cursor().execute(query).fetchall()
     return render_template("result.html", title="Search results", search_results=search_results,
                            questions=[q for q in questions if str(q[0]) in question_ids],
-                           jumbotron_bg=jumbotron_bg, header=header, footer=footer)
+                           jumbotron_bg=jumbotron_bg, header=header)
 
 
 @app.route('/stats')
@@ -161,7 +146,7 @@ def stats():
     stats = makeplot(languages)
     languages1 = list(map(lambda x: x[0], languages))
     return render_template("stats.html", title="Stats", lang_num=lang_num, languages=languages1, plot_url=stats,
-                           answers=answers, jumbotron_bg=jumbotron_bg, header=header, footer=footer)
+                           answers=answers, jumbotron_bg=jumbotron_bg, header=header)
 
 
 @app.route('/accepted', methods=['POST'])
@@ -182,8 +167,7 @@ def accept():
                     request.form['q4'], request.form['q5'], request.form['q6'], request.form['q7'])
         conn.cursor().execute(query)
         id = conn.cursor().execute("select count(*) from results").fetchall()[0][0]
-    return render_template("accepted.html", id=id, title="Answer accepted", jumbotron_bg=jumbotron_bg, header=header,
-                           footer=footer)
+    return render_template("accepted.html", id=id, title="Answer accepted", jumbotron_bg=jumbotron_bg, header=header)
 
 
 if __name__ == '__main__':

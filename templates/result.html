@@ -21,7 +21,7 @@
     <p style="color: white">Search results</p>
 </div>
 
-<div class="container" style="flex-grow: 1; max-width: 100%; overflow-x: scroll">
+<div class="container" style="flex-grow: 1; max-width: 100%; overflow-x: auto">
     <table class="table table-hover" style="max-width: inherit;">
         <thead>
         <tr>
@@ -49,7 +49,7 @@
 
 <div style="text-align: center">{{ search_results|length }} results found</div>
 
-{{ footer|safe }}
+{% include "footer.html" %}
 
 </body>
 </html>
