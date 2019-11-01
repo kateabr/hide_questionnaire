@@ -3,9 +3,11 @@ import sqlite3
 import sqlalchemy as db
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import rc
+import matplotlib as mpl
+from matplotlib import font_manager as fm
 
-rc('font', **{'family': 'serif', 'serif': ['Yu Mincho']})
+fm.fontManager.ttflist.extend(fm.createFontList(['./static/arial-unicode-ms.ttf']))
+mpl.rcParams['font.family'] = 'Arial Unicode MS'
 
 app = Flask(__name__)
 db = r"./results.db"
