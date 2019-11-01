@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="width: 100%">
+<html lang="en" style="height: 100%; width: 100%">
 <head>
     <title>{{ header }} :: {{ title }}</title>
     <meta charset="utf-8">
@@ -13,7 +13,7 @@
         });
     </script>
 </head>
-<body style="height: 100%; width: 100%; display: flex; flex-flow: column">
+<body style="height:100%; width: 100%; display: flex; flex-flow: column">
 
 <div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
     <h1>{{ header }}</h1>
@@ -21,8 +21,8 @@
     <p style="color: white">Search results</p>
 </div>
 
-<div class="container" style="flex-grow: 1; max-width: 100%; overflow-x: auto">
-    <table class="table table-hover" style="max-width: inherit;">
+<div class="container" style="flex-grow: 1; max-width: 100%; overflow: auto;">
+    <table class="table table-hover table-dark" >
         <thead>
         <tr>
             <th>Language</th>
