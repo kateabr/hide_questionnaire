@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100%">
+<html lang="en" style="position: relative; min-height: 100%">
 <head>
     <title>{{ header }}</title>
     <meta charset="utf-8">
@@ -8,7 +8,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 </head>
-<body style="height: 100%; width: 100%; display: flex; flex-flow: column">
+<body>
 <div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
     <h1>{{ header }}</h1>
     <hr>
@@ -16,8 +16,8 @@
         What verbs would you use in your native language to complete the sentences?</p>
 </div>
 
-<div class="container" style="flex-grow: 1">
-    <form action="/accepted" method='POST'>
+<div class="container">
+    <form action="/accepted" method='POST' style="margin-bottom: 110px">
         <fieldset>
             <div class="form-group">
                 <label for="language">What is your language?</label>

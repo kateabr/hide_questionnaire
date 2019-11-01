@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100%">
+<html lang="en" style="position: relative; min-height: 100%">
 <head>
     <title>{{ header }} :: {{ title }}</title>
     <meta charset="utf-8">
@@ -13,7 +13,7 @@
         });
     </script>
 </head>
-<body style="height: 100%; width: 100%; display: flex; flex-flow: column">
+<body>
 
 <div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
     <h1>{{ header }}</h1>
@@ -21,7 +21,7 @@
     <p style="color: white">Search and filter the provided answers.</p>
 </div>
 
-<div class="container" style="flex-grow: 1">
+<div class="container" style="margin-bottom: 110px">
     <form action="/result" method="POST">
         <div class="input-group">
             <input type="text" class="form-control" placeholder="Type a word" name="word_to_search">
