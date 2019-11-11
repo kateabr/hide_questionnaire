@@ -1,13 +1,8 @@
 from flask import Flask, render_template, request
 import sqlite3
 import sqlalchemy as db
-import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib as mpl
-from matplotlib import font_manager as fm
 
-fm.fontManager.ttflist.extend(fm.createFontList(['./static/arial-unicode-ms.ttf']))
-mpl.rcParams['font.family'] = 'Arial Unicode MS'
 
 app = Flask(__name__)
 db = r"./results.db"
@@ -15,14 +10,11 @@ jumbotron_bg = "https://sun9-30.userapi.com/c857520/v857520212/c8d33/2830GSktk0w
 header = "Hide that!"
 
 
-def makeplot(languages):
-    fig, ax = plt.subplots()
-
-    size = 0.3
-
+def gather_plot_info():
     conn = sqlite3.connect(db)
     with conn:
-        vals_list = []
+        languages = conn.cursor().execute("select * from languages").fetchall()
+        sex_vals_list = []
         for lang in languages:
             m = conn.cursor().execute(
                 ("select ifnull(count(*), 0) from results where sex = \"Male\" and language_id = \"{}\"").format(
@@ -30,40 +22,36 @@ def makeplot(languages):
             f = conn.cursor().execute(
                 ("select ifnull(count(*), 0) from results where sex = \"Female\" and language_id = \"{}\"").format(
                     lang[1])).fetchall()[0][0]
-            vals_list.append((m, f))
+            sex_vals_list.append((m, f))
 
-    vals = np.array(vals_list)
-    inner_vals = vals.flatten()
-    cmap = plt.get_cmap("tab20c")
-    outer_colors = cmap(np.arange(len(languages) + 1) * 4)
-    inner_colors_list = []
-    sex_labels = []
-    for i in range(len(languages)):
-        inner_colors_list.append(i * 4 + 1)
-        inner_colors_list.append(i * 4 + 2)
-        if inner_vals[2 * i] > 0:
-            sex_labels.extend(['♂ ({})'.format(vals[i][0])])
-        else:
-            sex_labels.extend([''])
-        if inner_vals[2 * i + 1] > 0:
-            sex_labels.extend(['♀ ({})'.format(vals[i][1])])
-        else:
-            sex_labels.extend([''])
-    inner_colors = cmap(np.array(inner_colors_list))
+    vals = np.array(sex_vals_list)
+    lang_distr = [sum(sex_vals) for sex_vals in sex_vals_list]
+    sex_distr = list(vals.flatten())
+    sex = []
+    for val in sex_vals_list:
+        sex.append('♂')
+        sex.append('♀')
+    # cmap = plt.get_cmap("tab20c")
+    # outer_colors = cmap(np.arange(len(languages) + 1) * 4)
+    # inner_colors_list = []
+    # sex_labels = []
+    # for i in range(len(languages)):
+    #     inner_colors_list.append(i * 4 + 1)
+    #     inner_colors_list.append(i * 4 + 2)
+    #     if sex_distr[2 * i] > 0:
+    #         sex_labels.extend(['♂ ({})'.format(vals[i][0])])
+    #     else:
+    #         sex_labels.extend([''])
+    #     if sex_distr[2 * i + 1] > 0:
+    #         sex_labels.extend(['♀ ({})'.format(vals[i][1])])
+    #     else:
+    #         sex_labels.extend([''])
+    # inner_colors = cmap(np.array(inner_colors_list))
+    #
+    # lang_labels_temp = list(zip(languages, sex_vals_list))
+    # lang_labels_final = [f"{x[0][0]} ({sum(x[1])})" if sum(x[1]) > 0 else "" for x in lang_labels_temp]
 
-    lang_labels_temp = list(zip(languages, vals_list))
-    lang_labels_final = [f"{x[0][0]} ({sum(x[1])})" if sum(x[1]) > 0 else "" for x in lang_labels_temp]
-
-    ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors, labels=lang_labels_final,
-           wedgeprops=dict(width=size, edgecolor='w'))
-
-    ax.pie(inner_vals, radius=1 - size, colors=inner_colors, labels=sex_labels, labeldistance=0.7,
-           wedgeprops=dict(width=size, edgecolor='w'))
-
-    ax.set(aspect="equal", title='Answers language- and gender-wise')
-
-    plt.savefig('static/stats.png')
-    return 'static/stats.png'
+    return list(map(lambda l: l[0], languages)), lang_distr, sex, sex_distr
 
 
 @app.route('/')
@@ -143,11 +131,10 @@ def stats():
     conn = sqlite3.connect(db)
     with conn:
         lang_num = conn.cursor().execute("select ifnull(count(*), 0) from languages").fetchall()[0][0]
-        languages = conn.cursor().execute("select * from languages").fetchall()
         answers = conn.cursor().execute("select count(*) from results").fetchall()[0][0]
-    stats = makeplot(languages)
-    languages1 = list(map(lambda x: x[0], languages))
-    return render_template("stats.html", title="Stats", lang_num=lang_num, languages=languages1, plot_url=stats,
+    languages, lang_distr, sexes, sex_distr = gather_plot_info()
+    return render_template("stats.html", header_title="Stats", lang_num=lang_num, languages=languages,
+                           lang_distr = lang_distr, sexes = sexes, sex_distr = sex_distr,
                            answers=answers, jumbotron_bg=jumbotron_bg, header=header)
 
 
