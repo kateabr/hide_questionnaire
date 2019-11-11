@@ -1,8 +1,23 @@
-from flask import Flask, render_template, request
+import csv
+import io
 import sqlite3
-import sqlalchemy as db
-import numpy as np
+from datetime import datetime
 
+import numpy as np
+import sqlalchemy as db
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask, render_template, request, send_from_directory
+from pathlib import Path
+
+
+def clear_temp():
+    temp = Path("./temp")
+    for item in temp.iterdir():
+        item.unlink()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(clear_temp, trigger='interval', minutes=2)
+scheduler.start()
 
 app = Flask(__name__)
 db = r"./results.db"
@@ -28,28 +43,9 @@ def gather_plot_info():
     lang_distr = [sum(sex_vals) for sex_vals in sex_vals_list]
     sex_distr = list(vals.flatten())
     sex = []
-    for val in sex_vals_list:
+    for _ in sex_vals_list:
         sex.append('♂')
         sex.append('♀')
-    # cmap = plt.get_cmap("tab20c")
-    # outer_colors = cmap(np.arange(len(languages) + 1) * 4)
-    # inner_colors_list = []
-    # sex_labels = []
-    # for i in range(len(languages)):
-    #     inner_colors_list.append(i * 4 + 1)
-    #     inner_colors_list.append(i * 4 + 2)
-    #     if sex_distr[2 * i] > 0:
-    #         sex_labels.extend(['♂ ({})'.format(vals[i][0])])
-    #     else:
-    #         sex_labels.extend([''])
-    #     if sex_distr[2 * i + 1] > 0:
-    #         sex_labels.extend(['♀ ({})'.format(vals[i][1])])
-    #     else:
-    #         sex_labels.extend([''])
-    # inner_colors = cmap(np.array(inner_colors_list))
-    #
-    # lang_labels_temp = list(zip(languages, sex_vals_list))
-    # lang_labels_final = [f"{x[0][0]} ({sum(x[1])})" if sum(x[1]) > 0 else "" for x in lang_labels_temp]
 
     return list(map(lambda l: l[0], languages)), lang_distr, sex, sex_distr
 
@@ -72,57 +68,141 @@ def search():
                            jumbotron_bg=jumbotron_bg, header=header)
 
 
+def generate_query(params):
+    query = f'''select {','.join(params['cols'])} from results left join languages l on results.language_id = l.id'''
+    additional_query = []
+    sex_query = ""
+    lang_query = []
+    col_query = []
+    if len(params) > 1:
+        if 'sex' in params:
+            sex_query = f'''sex = "{params['sex']}"'''
+        if 'language' in params:
+            lang_query = list(map(lambda l: f'''language_id = {l}''', params['language']))
+            if len(lang_query) > 1:
+                lang_query = '(' + " or ".join(lang_query) + ')'
+            else:
+                lang_query = lang_query[0]
+        if 'word' in params:
+            col_query = list(
+                map(lambda q: f'''{q} like "{params['word']}"''', list(filter(lambda c: c[0] == 'q', params['cols']))))
+            if len(col_query) > 1:
+                col_query = '(' + ' or '.join(col_query) + ')'
+            else:
+                col_query = col_query[0]
+
+    if sex_query:
+        additional_query.append(sex_query)
+
+    if lang_query:
+        additional_query.append(lang_query)
+
+    if col_query:
+        additional_query.append(col_query)
+
+    if additional_query:
+        if len(additional_query) > 1:
+            additional_query = ' and '.join(additional_query)
+        else:
+            additional_query = additional_query[0]
+    else:
+        additional_query = ""
+
+    if additional_query != "":
+        query += ' where ' + additional_query
+
+    return query
+
+
+def generate_params(req_f):
+    cols = ['language', 'sex']
+    cols.extend(list(map(lambda q: f'''q{q.split('_')[1]}''', [key for key in req_f if key.startswith("q")])))
+    if len(cols) == 2:
+        conn = sqlite3.connect(db)
+        with conn:
+            questions = conn.cursor().execute("select * from questions").fetchall()
+            cols.extend(list(map(lambda q: f"q{q[0]}", questions)))
+
+    if req_f['word_to_search'] != "":
+        word = req_f['word_to_search']
+    else:
+        word = ""
+
+    sex = list(map(lambda s: s.split('_')[1], [key for key in req_f if key.startswith("sex")]))
+    if sex:
+        sex = sex[0]
+
+    language = list(map(lambda l: l.split('_')[1], [key for key in req_f if key.startswith("lang")]))
+
+    params = {'cols': cols}
+    if word != "":
+        params['word'] = word
+    if sex:
+        params['sex'] = sex
+    if language:
+        params['language'] = language
+
+    return params
+
+
 @app.route('/result', methods=['POST'])
 def results():
+    params = generate_params(request.form)
+    query = generate_query(params)
     conn = sqlite3.connect(db)
     with conn:
+        search_results = conn.cursor().execute(query).fetchall()
         questions = conn.cursor().execute("select * from questions").fetchall()
 
-        additional_query = []
+    processed_questions = [q for q in questions if f'''q{q[0]}''' in params['cols']]
 
-        question_ids = list(map(lambda q: q[0].split('_')[1],
-                                     [(key, request.form[key]) for key in request.form if key.startswith("q")]))
-
-        query_cols = ["language", "sex"]
-        if not question_ids:
-            question_ids = list(map(lambda q: f"{q[0]}", questions))
-        query_cols.extend(list(map(lambda q: f"q{q}", question_ids)))
-        question_comparisons = list(map(lambda q: f"q{q} like \"{request.form['word_to_search']}\"", question_ids))
-
-        question_id_query = ", ".join(query_cols)
-
-        if len(question_comparisons) == 1:
-            question_comparison_query = question_comparisons[0]
+    processed_params = {'cols': ','.join(params['cols'])}
+    if 'word' in params:
+        processed_params['word'] = params['word']
+    else:
+        processed_params['word'] = ""
+    if 'sex' in params != "":
+        processed_params['sex'] = params['sex']
+    else:
+        processed_params['sex'] = ""
+    if 'language' in params:
+        if len(params['language']) == 1:
+            processed_params['language'] = params['language'][0]
         else:
-            question_comparison_query = " or ".join(question_comparisons)
+            processed_params['language'] = ",".join(params['language'])
+    else:
+        processed_params['language'] = ""
 
-        lang_ids = list(map(lambda l: l[0].split('_')[1],
-                            [(key, request.form[key]) for key in request.form if key.startswith("lang")]))
-        lang_query = []
-        for lang_id in lang_ids:
-            lang_query.append("language_id = {}".format(lang_id))
-        if len(lang_query) > 1:
-            additional_query.append('(' + " or ".join(lang_query) + ')')
-        elif len(lang_query) == 1:
-            additional_query.append('(' + lang_query[0] + ')')
-
-        sex_ids = list(map(lambda l: l[0].split('_')[1],
-                           [(key, request.form[key]) for key in request.form if key.startswith("sex")]))
-        if sex_ids:
-            additional_query.append("sex = \"{}\"".format(sex_ids[0]))
-
-        additional_query_final = " and ".join(additional_query)
-
-        activate_additional_query = (len(lang_query) > 0) or (len(sex_ids) > 0)
-        query = f"select {question_id_query} from results inner join languages on results.language_id = languages.id"
-        if request.form['word_to_search'] != "":
-            query += f" where {question_comparison_query}"
-        if activate_additional_query:
-            query += " and " + additional_query_final
-        search_results = conn.cursor().execute(query).fetchall()
     return render_template("result.html", title="Search results", search_results=search_results,
-                           questions=[q for q in questions if str(q[0]) in question_ids],
-                           jumbotron_bg=jumbotron_bg, header=header)
+                           questions=processed_questions,
+                           jumbotron_bg=jumbotron_bg, header=header, params=processed_params)
+
+
+@app.route('/download', methods=['GET'])
+def download_csv():
+    params = {'cols': request.args.get('cols').split(',')}
+    if request.args.get('sex') != "":
+        params['sex'] = request.args.get('sex')
+    if request.args.get("language") != "":
+        params['language'] = request.args.get('language').split(',')
+    if request.args.get("word") != "":
+        params['word'] = request.args.get("word")
+
+    conn = sqlite3.connect(db)
+    with conn:
+        search_results = conn.cursor().execute(generate_query(params)).fetchall()
+
+    now = datetime.now()
+    Path('./temp').mkdir(parents=True, exist_ok=True)
+    fname = f'''hide-search-results_{now.strftime("%d-%m-%Y_%H-%M-%S")}.csv'''
+    with io.open(f'''./temp/{fname}''', 'w', newline='', encoding='utf-8') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=params['cols'])
+        writer.writeheader()
+        for res in search_results:
+            writer.writerow(dict(zip(params['cols'], res)))
+
+    return send_from_directory(directory="./temp", filename=fname, as_attachment=True, attachment_filename=fname)
+
 
 
 @app.route('/stats')
@@ -134,7 +214,7 @@ def stats():
         answers = conn.cursor().execute("select count(*) from results").fetchall()[0][0]
     languages, lang_distr, sexes, sex_distr = gather_plot_info()
     return render_template("stats.html", header_title="Stats", lang_num=lang_num, languages=languages,
-                           lang_distr = lang_distr, sexes = sexes, sex_distr = sex_distr,
+                           lang_distr=lang_distr, sexes=sexes, sex_distr=sex_distr,
                            answers=answers, jumbotron_bg=jumbotron_bg, header=header)
 
 
