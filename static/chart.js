@@ -56,7 +56,7 @@ class RandomRGBAColorsList {
 }
 
 function renderChart(languages, languages_distr, sexes, sex_distr) {
-    var ctx = document.getElementById('stats');
+    var ctx = document.getElementById("stats");
 
     var colors = new RandomRGBAColorsList(languages.length, 50);
 
