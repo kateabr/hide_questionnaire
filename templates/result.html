@@ -4,9 +4,7 @@
     <title>{{ header }} :: {{ title }}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    {% include "styles.html" %}
     <script>
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip();
@@ -22,15 +20,16 @@
 </div>
 
 <div class="container" style="max-width: 100%; overflow: auto;">
-    <table class="table table-hover table-dark">
+    <table class="table table-hover">
         <thead>
         <tr>
             <th>Language</th>
             <th>Sex</th>
             {% for question in questions %}
                 <th>
-                    <div class="text-info" data-toggle="tooltip" title="{{ question[1] }}" data-placement="top">
-                        Q{{ question[0] }}</div>
+                    <span class="d-inline-block" data-placement="bottom" tabindex="0" data-toggle="tooltip" title="{{ question[1] }}">
+                        <div style="pointer-events: none; text-decoration: underline">Q{{ question[0] }}</div>
+                    </span>
                 </th>
             {% endfor %}
         </tr>
@@ -53,7 +52,8 @@
         <input type="hidden" name="sex" value="{{ params['sex'] }}">
         <input type="hidden" name="language" value="{{ params['language'] }}">
         <input type="hidden" name="word" value="{{ params['word'] }}">
-        {{ search_results|length }} results found <button type="submit" class="btn btn-dark"><span class="glyphicon glyphicon-download-alt"></span></button>
+        {{ search_results|length }} results found
+        <button type="submit" class="btn btn-info"><i class="fa fa-download"></i></button>
     </form>
 </div>
 

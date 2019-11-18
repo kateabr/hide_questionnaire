@@ -15,6 +15,7 @@ def clear_temp():
     for item in temp.iterdir():
         item.unlink()
 
+
 scheduler = BackgroundScheduler()
 scheduler.add_job(clear_temp, trigger='interval', minutes=2)
 scheduler.start()
@@ -54,8 +55,10 @@ def gather_plot_info():
 def index():
     conn = sqlite3.connect(db)
     with conn:
+        languages = conn.cursor().execute("select * from languages").fetchall()
         questions = conn.cursor().execute("select * from questions").fetchall()
-    return render_template("index.html", questions=questions, jumbotron_bg=jumbotron_bg, header=header)
+    return render_template("index.html", questions=questions, jumbotron_bg=jumbotron_bg, header=header,
+                           languages=list(map(lambda l: l[0], languages)))
 
 
 @app.route('/search')
@@ -116,29 +119,22 @@ def generate_query(params):
 
 def generate_params(req_f):
     cols = ['language', 'sex']
-    cols.extend(list(map(lambda q: f'''q{q.split('_')[1]}''', [key for key in req_f if key.startswith("q")])))
+    cols.extend(req_f.getlist('question'))
     if len(cols) == 2:
         conn = sqlite3.connect(db)
         with conn:
             questions = conn.cursor().execute("select * from questions").fetchall()
             cols.extend(list(map(lambda q: f"q{q[0]}", questions)))
 
-    if req_f['word_to_search'] != "":
-        word = req_f['word_to_search']
-    else:
-        word = ""
-
-    sex = list(map(lambda s: s.split('_')[1], [key for key in req_f if key.startswith("sex")]))
-    if sex:
-        sex = sex[0]
-
-    language = list(map(lambda l: l.split('_')[1], [key for key in req_f if key.startswith("lang")]))
-
     params = {'cols': cols}
-    if word != "":
-        params['word'] = word
-    if sex:
-        params['sex'] = sex
+
+    if req_f['word_to_search'] != "":
+        params['word'] = req_f['word_to_search']
+
+    if "sex" in req_f:
+        params['sex'] = req_f['sex']
+
+    language = req_f.getlist('lang')
     if language:
         params['language'] = language
 
@@ -204,7 +200,6 @@ def download_csv():
     return send_from_directory(directory="./temp", filename=fname, as_attachment=True, attachment_filename=fname)
 
 
-
 @app.route('/stats')
 def stats():
     lang_num = 0
@@ -220,20 +215,18 @@ def stats():
 
 @app.route('/accepted', methods=['POST'])
 def accept():
+    req_f = request.form
     conn = sqlite3.connect(db)
     with conn:
-        if conn.cursor().execute(
-                "select count(*) from languages where language=\"{}\"".format(request.form['language'])).fetchall()[0][
-            0] == 0:
+        if conn.cursor().execute(f'''select count(*) from languages where language=\"{request.form['language']}\"''').fetchall()[0][0] == 0:
             conn.cursor().execute("insert into languages(language) values({})".format(request.form['language']))
         lang_id = conn.cursor().execute(
-            "select id from languages where language=\"{}\"".format(request.form['language'])).fetchall()[0][0]
+            f'''select id from languages where language="{req_f['language']}"''').fetchall()[0][0]
 
-        query = "insert into results(language_id, sex, q1, q2, q3, q4, q5, q6, q7) values({}, \"{}\", \"{}\",\
-             \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\")" \
-            .format(lang_id, request.form['sex'], request.form['q1'], request.form['q2'],
-                    request.form['q3'], \
-                    request.form['q4'], request.form['q5'], request.form['q6'], request.form['q7'])
+        q_keys = [k for k in req_f.keys() if k[0] == 'q']
+        q_vals = [f'"{req_f[key]}"' for key in q_keys]
+
+        query = f'''insert into results(language_id, sex, {", ".join(q_keys)}) values({lang_id}, "{req_f['sex']}", {", ".join(q_vals)})'''
         conn.cursor().execute(query)
         id = conn.cursor().execute("select count(*) from results").fetchall()[0][0]
     return render_template("accepted.html", id=id, title="Answer accepted", jumbotron_bg=jumbotron_bg, header=header)
