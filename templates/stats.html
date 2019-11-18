@@ -6,6 +6,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
     <script type="text/javascript" src={{ url_for('static', filename='chart.js') }}></script>
+
+    <style>
+        @media screen and (orientation: landscape) {
+            .canvas {
+                max-height: 400px;
+                height: 100vh;
+                width: 100vh;
+            }
+        }
+
+        @media screen and (orientation: portrait) {
+            .canvas {
+                height: 100vw;
+                width: 100vw;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="jumbotron text-center" style="background-image: url({{ jumbotron_bg }}); background-position: center">
@@ -19,8 +36,8 @@
     Total number of languages collected: {{ lang_num }},
     among them: {{ ", ".join(languages) }}
 
-    <div style="text-align: center; margin-top: 20px; margin-bottom: 20px; overflow: auto">
-        <canvas id="stats"></canvas>
+    <div class="canvas" style="text-align: center; margin-top: 20px; margin-bottom: 20px; width: 100%">
+        <canvas id="stats" style="height: 100%; width: 100%"></canvas>
     </div>
     <script type="text/javascript">
         renderChart({{ languages|safe }}, {{ lang_distr }}, {{ sexes|safe }}, {{ sex_distr }});
