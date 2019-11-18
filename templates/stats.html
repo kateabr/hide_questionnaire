@@ -2,7 +2,6 @@
 <html lang="en" style="position: relative; min-height: 100%">
 <head>
     <title>{{ header }} :: {{ header_title }}</title>
-    <meta charset="utf-8">
     {% include "styles.html" %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
@@ -20,9 +19,7 @@
     Total number of languages collected: {{ lang_num }},
     among them: {{ ", ".join(languages) }}
 
-    {{ languages_distr }}<br>
-
-    <div style="text-align: center; margin-top: 20px; margin-bottom: 20px; width: inherit">
+    <div style="text-align: center; margin-top: 20px; margin-bottom: 20px; overflow: auto">
         <canvas id="stats"></canvas>
     </div>
     <script type="text/javascript">

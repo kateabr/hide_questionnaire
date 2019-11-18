@@ -91,7 +91,6 @@ function renderChart(languages, languages_distr, sexes, sex_distr) {
                 display: true,
                 text: 'Answers language- and sex-wise',
                 fontSize: 20,
-                responsive: false
             },
             plugins: {
                 labels: {
