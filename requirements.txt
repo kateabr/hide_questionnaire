@@ -1,6 +1,5 @@
 apscheduler
 Flask==1.1.1
-matplotlib==3.1.1
 numpy==1.17.0
 SQLAlchemy==1.3.10
 gunicorn==19.9.0

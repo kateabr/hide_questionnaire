@@ -14,7 +14,7 @@
 </div>
 
 <div class="container">
-    <form action="/accepted" method='POST' style="margin-bottom: 110px">
+    <form name="questionnaire" action="/accepted" method='POST' style="margin-bottom: 110px">
         <fieldset>
             <div class="form-group">
                 <div class="input-group">
@@ -54,7 +54,7 @@
             {% endfor %}
 
             <div style="text-align: center; margin: 40px">
-                <button type="submit" class="btn btn-default btn-lg">
+                <button type="submit" onClick="submitForm()" class="btn btn-default btn-lg">
                     <i class="fa fa-paper-plane" style="margin-right: 3mm"></i>Submit the answer
                 </button>
             </div>
@@ -67,6 +67,12 @@
 </body>
 <script type="text/javascript">
     language_live_search({{ languages|safe }});
+
+    function submitForm() {
+        if (document.getElementById("language").readOnly === false) {
+            document.getElementById("language").value = "";
+        }
+    }
 </script>
 
 </html>
