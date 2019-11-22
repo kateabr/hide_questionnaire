@@ -1,5 +1,6 @@
 import csv
 import io
+import os
 import sqlite3
 from datetime import datetime
 
@@ -12,8 +13,10 @@ from pathlib import Path
 
 def clear_temp():
     temp = Path("./temp")
+    now = datetime.now()
     for item in temp.iterdir():
-        item.unlink()
+        if now.timestamp() - item.stat().st_mtime > 60*4:
+            item.unlink()
 
 
 scheduler = BackgroundScheduler()
