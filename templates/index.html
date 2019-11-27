@@ -27,7 +27,11 @@
                         </div>
                     </div>
                     <div id="dropdown_menu" class="dropdown-menu" style="width: 100%" aria-labelledby="language">
-                        <div id="menuItems"></div>
+                        <div id="menuItems">
+                            {% for lang in languages %}
+                                <input type="button" class="dropdown-item" aria-controls="language_menu" value="{{ lang }}">
+                            {% endfor %}
+                        </div>
                         <div id="empty" style="text-align: left" type="button"
                              class="btn button-default dropdown-header"></div>
                     </div>
@@ -66,7 +70,7 @@
 
 </body>
 <script type="text/javascript">
-    language_live_search({{ languages|safe }});
+    language_live_search();
 
     function submitForm() {
         if (document.getElementById("language").readOnly === false) {

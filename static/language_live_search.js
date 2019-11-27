@@ -1,15 +1,3 @@
-function buildDropDown(values) {
-    let contents = [];
-    for (let name of values) {
-        contents.push('<input type="button" class="dropdown-item" aria-controls="language_menu" value="' + name + '"/>')
-    }
-
-    $('#menuItems').append(contents.join(""));
-
-    $('#empty').hide()
-    $('#clear').hide()
-}
-
 function refresh(items) {
     for (let i = 0; i < items.length; i++) {
         $(items[i]).show()
@@ -20,7 +8,6 @@ function refresh(items) {
 
 function filter(word, items) {
     let length = items.length;
-    let collection = [];
     let hidden = 0;
 
     for (let i = 0; i < length; i++) {
@@ -40,7 +27,10 @@ function filter(word, items) {
     }
 }
 
-function language_live_search(languages) {
+function language_live_search() {
+    $('#empty').hide();
+    $('#clear').hide();
+
     let items = document.getElementsByClassName("dropdown-item");
 
     window.addEventListener('input', function () {
@@ -68,6 +58,4 @@ function language_live_search(languages) {
         $('#clear').show();
         $('#dropdown_menu').hide();
     });
-
-    buildDropDown(languages)
 }
